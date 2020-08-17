@@ -47,12 +47,11 @@ class UserController {
     const trx = await connection.transaction();
     const users = await trx('users').select('users.*');
     const userExists = users.filter((user) => user.id === req.userId);
+    const emailExists = users.filter((user) => user.email === email);
 
-    if (email !== userExists[0].email) {
-      // const userExists = users.filter((user) => user.email === email);
-
-      if (userExists.length === 0) {
-        return res.status(400).json({ error: "User doesn't exist" });
+    if (emailExists.length > 0) {
+      if (email === emailExists[0].email) {
+        return res.status(400).json({ error: 'Email already in use' });
       }
     }
 
