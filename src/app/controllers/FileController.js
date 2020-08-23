@@ -11,7 +11,6 @@ class FileController {
 
     const insertedFile = await connection('files').insert(file);
 
-    console.log();
     return res.json(insertedFile);
   }
 }

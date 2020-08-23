@@ -15,8 +15,8 @@ exports.up = function (knex) {
       .inTable('users')
       .onUpdate('CASCADE')
       .onDelete('SET NULL');
-    table.date('date').notNullable();
-    table.date('canceled_at');
+    table.datetime('date').notNullable();
+    table.datetime('canceled_at');
     table.datetime('created_at').notNullable().defaultTo(knex.fn.now());
     table.datetime('updated_at').notNullable().defaultTo(knex.fn.now());
   });
