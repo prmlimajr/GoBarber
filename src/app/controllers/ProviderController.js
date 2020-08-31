@@ -2,6 +2,8 @@ import connection from '../../database/connection';
 
 class ProviderController {
   async index(req, res) {
+    const { page = 1 } = req.query;
+
     let query = await connection('users')
       .select(
         'users.id',
@@ -10,6 +12,8 @@ class ProviderController {
         'users.avatar_id',
         'files.path'
       )
+      .limit(5)
+      .offset((page - 1) * 5)
       .leftJoin('files', 'files.id', '=', 'users.avatar_id')
       .where({ provider: true });
 

@@ -3,6 +3,8 @@ import { startOfHour, parseISO, isBefore } from 'date-fns';
 import connection from '../../database/connection';
 class AppointmentController {
   async index(req, res) {
+    const { page = 1 } = req.query;
+
     let query = await connection('appointments')
       .select(
         'appointments.id',
@@ -11,6 +13,8 @@ class AppointmentController {
         'users.name as uName',
         'files.path as fPath'
       )
+      .limit(5)
+      .offset((page - 1) * 5)
       .leftJoin('users', 'appointments.provider_id', '=', 'users.id')
       .leftJoin('files', 'files.id', '=', 'users.avatar_id')
       .where({ user_id: req.userId, canceled_at: null })
