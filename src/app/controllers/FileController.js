@@ -11,6 +11,10 @@ class FileController {
 
     const insertedFile = await connection('files').insert(file);
 
+    const updateUser = await connection('users')
+      .update({ avatar_id: insertedFile[0] })
+      .where({ id: req.userId });
+
     return res.json(insertedFile);
   }
 }

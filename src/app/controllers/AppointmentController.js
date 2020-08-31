@@ -3,15 +3,36 @@ import { startOfHour, parseISO, isBefore } from 'date-fns';
 import connection from '../../database/connection';
 class AppointmentController {
   async index(req, res) {
-    const appointments = await connection('appointments')
-      .select('appointments.*')
-      .where({ user_id: req.userId, canceled_at: null });
+    let query = await connection('appointments')
+      .select(
+        'appointments.id',
+        'appointments.date',
+        'users.id as uId',
+        'users.name as uName',
+        'files.path as fPath'
+      )
+      .leftJoin('users', 'appointments.provider_id', '=', 'users.id')
+      .leftJoin('files', 'files.id', '=', 'users.avatar_id')
+      .where({ user_id: req.userId, canceled_at: null })
+      .orderBy('date');
 
-    console.log(appointments);
-    if (appointments.length === 0) {
-      return res.status(401).json({ error: 'Empty list' });
+    const rows = await query;
+    const appointments = [];
+    for (let row of rows) {
+      const appointment = {
+        id: row.id,
+        date: row.date,
+        provider: {
+          id: row.uId,
+          name: row.uName,
+          avatar_url: row.fPath
+            ? `http://localhost:3333/files/${row.fPath}`
+            : null,
+        },
+      };
+
+      appointments.push(appointment);
     }
-
     return res.json(appointments);
   }
 
@@ -31,7 +52,6 @@ class AppointmentController {
       .select('users.*')
       .where({ provider: true, id: provider_id });
 
-    console.log('provider', providerExists);
     if (providerExists.length === 0) {
       return res
         .status(401)
