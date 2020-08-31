@@ -7,7 +7,7 @@ class ScheduleController {
       .select('users.*')
       .where({ id: req.userId, provider: true });
 
-    if (!checkUserProvider) {
+    if (checkUserProvider.length === 0) {
       return res.status(401).json({ error: 'User is not a provider' });
     }
 
