@@ -20,6 +20,10 @@ class ScheduleController {
       .whereBetween('date', [startOfDay(parsedDate), endOfDay(parsedDate)])
       .orderBy('date');
 
+    if (appointments.length === 0) {
+      return res.status(200).json({ error: 'Empty list' });
+    }
+
     res.json(appointments);
   }
 }
