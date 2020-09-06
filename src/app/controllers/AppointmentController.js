@@ -1,8 +1,9 @@
 import * as Yup from 'yup';
-import { startOfHour, parseISO, isBefore, format } from 'date-fns';
-import pt from 'date-fns/locale/pt';
+import { startOfHour, parseISO, isBefore, format, subHours } from 'date-fns';
+import pt, { date } from 'date-fns/locale/pt';
 import connection from '../../database/connection';
 import Notification from '../schemas/Notification';
+import { connect } from 'mongodb';
 class AppointmentController {
   async index(req, res) {
     const { page = 1 } = req.query;
@@ -20,7 +21,7 @@ class AppointmentController {
       .leftJoin('users', 'appointments.provider_id', '=', 'users.id')
       .leftJoin('files', 'files.id', '=', 'users.avatar_id')
       .where({ user_id: req.userId, canceled_at: null })
-      .orderBy('date');
+      .orderBy('date', 'desc');
 
     const rows = await query;
     const appointments = [];
@@ -112,7 +113,6 @@ class AppointmentController {
     const [user] = await connection('users')
       .select('users.*')
       .where({ id: req.userId });
-    console.log(user.name);
 
     const formattedDate = format(
       hourStart,
@@ -126,6 +126,37 @@ class AppointmentController {
     });
 
     return res.json(appointment);
+  }
+
+  async delete(req, res) {
+    const [appointment] = await connection('appointments')
+      .select('appointments.*')
+      .where({ id: req.params.id });
+
+    if (appointment.user_id !== req.userId) {
+      return res.status(401).json({
+        error: "You don't have permission to cancel this appointment",
+      });
+    }
+
+    if (appointment.canceled_at) {
+      return res.status(401).json({ error: 'Appointment already canceled' });
+    }
+
+    const dateWithSub = subHours(appointment.date, 2);
+
+    if (isBefore(dateWithSub, new Date())) {
+      return res
+        .status(401)
+        .json({ error: 'You can only cancel appointments 2 hours in advance' });
+    }
+
+    console.log(appointment);
+    await connection('appointments')
+      .update({ canceled_at: new Date() })
+      .where({ id: req.params.id });
+
+    return res.json({ appointmentCanceled: true });
   }
 }
 
