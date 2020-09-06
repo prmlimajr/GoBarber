@@ -1,9 +1,11 @@
 import * as Yup from 'yup';
 import { startOfHour, parseISO, isBefore, format, subHours } from 'date-fns';
-import pt, { date } from 'date-fns/locale/pt';
+import pt from 'date-fns/locale/pt';
 import connection from '../../database/connection';
 import Notification from '../schemas/Notification';
-import { connect } from 'mongodb';
+
+import Mail from '../../lib/mail';
+
 class AppointmentController {
   async index(req, res) {
     const { page = 1 } = req.query;
@@ -151,10 +153,19 @@ class AppointmentController {
         .json({ error: 'You can only cancel appointments 2 hours in advance' });
     }
 
-    console.log(appointment);
     await connection('appointments')
       .update({ canceled_at: new Date() })
       .where({ id: req.params.id });
+
+    const [provider] = await connection('users')
+      .select('users.*')
+      .where({ id: appointment.provider_id });
+
+    await Mail.sendMail({
+      to: `${provider.name} <${provider.email}>`,
+      subject: 'Agendamento cancelado',
+      text: 'Você tem um novo cancelamento.',
+    });
 
     return res.json({ appointmentCanceled: true });
   }
