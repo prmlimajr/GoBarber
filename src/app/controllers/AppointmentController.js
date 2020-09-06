@@ -64,6 +64,12 @@ class AppointmentController {
         .json({ error: 'You can only create appointments with providers' });
     }
 
+    if (providerExists[0].id === req.userId) {
+      return res
+        .status(401)
+        .json({ error: "You can't create an appointment with yourself" });
+    }
+
     /**
      * parseISO turns the date into an JS date and startOfHour ignores the minutes and takes just the hour.
      */
@@ -80,7 +86,6 @@ class AppointmentController {
       .select('appointments.*')
       .where({ provider_id, canceled_at: null, date: hourStart });
 
-    console.log('check', checkAvailability);
     if (checkAvailability.length > 0) {
       return res
         .status(400)
@@ -104,9 +109,10 @@ class AppointmentController {
     /**
      * Notify app provider
      */
-    const user = await connection('users')
+    const [user] = await connection('users')
       .select('users.*')
       .where({ id: req.userId });
+    console.log(user.name);
 
     const formattedDate = format(
       hourStart,

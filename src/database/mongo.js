@@ -10,7 +10,7 @@ const mongoConnection = () =>
       }
     )
     .then(() => {
-      console.log('MongoDB Connected…');
+      console.log('Conectado ao MongoDB');
     })
     .catch((err) => console.log(err));
 
