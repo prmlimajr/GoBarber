@@ -1,6 +1,8 @@
 import * as Yup from 'yup';
-import { startOfHour, parseISO, isBefore } from 'date-fns';
+import { startOfHour, parseISO, isBefore, format } from 'date-fns';
+import pt from 'date-fns/locale/pt';
 import connection from '../../database/connection';
+import Notification from '../schemas/Notification';
 class AppointmentController {
   async index(req, res) {
     const { page = 1 } = req.query;
@@ -66,7 +68,6 @@ class AppointmentController {
      * parseISO turns the date into an JS date and startOfHour ignores the minutes and takes just the hour.
      */
     const hourStart = startOfHour(parseISO(date));
-    console.log('hour', hourStart);
 
     if (isBefore(hourStart, new Date())) {
       return res.status(400).json({ error: 'Past dates are not permitted' });
@@ -99,6 +100,24 @@ class AppointmentController {
     };
 
     const booking = await connection('appointments').insert(appointment);
+
+    /**
+     * Notify app provider
+     */
+    const user = await connection('users')
+      .select('users.*')
+      .where({ id: req.userId });
+
+    const formattedDate = format(
+      hourStart,
+      "'dia' dd 'de' MMMM', às' H:mm'h'",
+      { locale: pt }
+    );
+
+    await Notification.create({
+      content: `Novo agendamento de ${user.name} para ${formattedDate}`,
+      user: provider_id,
+    });
 
     return res.json(appointment);
   }
