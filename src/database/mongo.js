@@ -2,13 +2,10 @@ import mongoose from 'mongoose';
 
 const mongoConnection = () =>
   mongoose
-    .connect(
-      'mongodb+srv://prmlimajr:onegai@cluster0.1rwdi.mongodb.net/gobarber?retryWrites=true&w=majority',
-      {
-        useNewUrlParser: true,
-        useFindAndModify: true,
-      }
-    )
+    .connect(process.env.MONGO_URL, {
+      useNewUrlParser: true,
+      useFindAndModify: true,
+    })
     .then(() => {
       console.log('Conectado ao MongoDB');
     })
