@@ -1,5 +1,12 @@
 import * as Yup from 'yup';
-import { startOfHour, parseISO, isBefore, format, subHours } from 'date-fns';
+import {
+  startOfHour,
+  parseISO,
+  isBefore,
+  format,
+  subHours,
+  isBefore,
+} from 'date-fns';
 import pt from 'date-fns/locale/pt';
 import connection from '../../database/connection';
 import Notification from '../schemas/Notification';
@@ -29,6 +36,8 @@ class AppointmentController {
     const appointments = [];
     for (let row of rows) {
       const appointment = {
+        past: isBefore(row.date, new Date()),
+        cancelable: isBefore(new Date(), subHours(row.date, 2)),
         id: row.id,
         date: row.date,
         provider: {
